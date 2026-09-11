@@ -1,0 +1,334 @@
+// =====================================================================
+//  HRMS - Prisma Schema (SQLite)
+//  Database ka URL yahan nahi hai, woh prisma.config.ts mein hai (Prisma 7)
+//  MySQL pe shift karna ho to sirf provider = "mysql" kar dein.
+// =====================================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// =====================================================================
+//  ENUMS (fixed values)
+// =====================================================================
+
+enum EmployeeStatus {
+  ACTIVE
+  ON_LEAVE
+  TERMINATED
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ApprovalDecision {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LEAVE
+  HOLIDAY
+}
+
+enum AnnouncementScope {
+  GLOBAL
+  SUBSIDIARY
+}
+
+// =====================================================================
+//  LEVEL 1: ORGANIZATION STRUCTURE
+//  Country -> Subsidiary -> Department -> Designation
+// =====================================================================
+
+model Country {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  code      String   @unique // "PK", "AE", "GB"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subsidiaries Subsidiary[]
+}
+
+model Subsidiary {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  city      String
+  timezone  String // "Asia/Karachi"
+  currency  String // "PKR"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  countryId Int
+  country   Country @relation(fields: [countryId], references: [id], onDelete: Restrict)
+
+  departments   Department[]
+  employees     Employee[]
+  holidays      Holiday[]
+  leaveTypes    LeaveType[]
+  announcements Announcement[]
+
+  @@index([countryId])
+}
+
+model Department {
+  id        Int      @id @default(autoincrement())
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subsidiaryId Int
+  subsidiary   Subsidiary @relation(fields: [subsidiaryId], references: [id], onDelete: Restrict)
+
+  // Department Head = escalated leave (Level 2) ka approver
+  headId Int?
+  head   Employee? @relation("DepartmentHead", fields: [headId], references: [id], onDelete: SetNull)
+
+  designations Designation[]
+  employees    Employee[]    @relation("EmployeeDepartment")
+
+  @@unique([subsidiaryId, name]) // ek subsidiary mein "Sales" do baar nahi
+  @@index([headId])
+}
+
+model Designation {
+  id        Int      @id @default(autoincrement())
+  title     String // "Software Engineer"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  departmentId Int
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+
+  employees Employee[]
+
+  @@unique([departmentId, title])
+}
+
+// =====================================================================
+//  LEVEL 2: ROLES & EMPLOYEES
+// =====================================================================
+
+model Role {
+  id          Int     @id @default(autoincrement())
+  code        String  @unique // SUPER_ADMIN, HR_MANAGER, DEPT_HEAD, TEAM_LEAD, EMPLOYEE
+  name        String // "Super Admin"
+  description String?
+
+  employees Employee[]
+}
+
+model Employee {
+  id           Int            @id @default(autoincrement())
+  employeeCode String         @unique // "EMP-0001"
+  firstName    String
+  lastName     String
+  email        String         @unique
+  passwordHash String
+  phone        String?
+  dateOfBirth  DateTime?
+  address      String?
+  joiningDate  DateTime
+  status       EmployeeStatus @default(ACTIVE)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // ---- Foreign keys ----
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  subsidiaryId Int
+  subsidiary   Subsidiary @relation(fields: [subsidiaryId], references: [id], onDelete: Restrict)
+
+  departmentId Int
+  department   Department @relation("EmployeeDepartment", fields: [departmentId], references: [id], onDelete: Restrict)
+
+  designationId Int
+  designation   Designation @relation(fields: [designationId], references: [id], onDelete: Restrict)
+
+  // ---- Reporting hierarchy (self-reference) ----
+  managerId Int?
+  manager   Employee?  @relation("ManagerReports", fields: [managerId], references: [id], onDelete: SetNull)
+  reports   Employee[] @relation("ManagerReports")
+
+  // ---- Reverse relations ----
+  headOfDepartments Department[]        @relation("DepartmentHead")
+  leaveBalances     LeaveBalance[]
+  leaveRequests     LeaveRequest[]
+  approvalSteps     LeaveApprovalStep[] @relation("StepApprover")
+  attendances       Attendance[]
+  notifications     Notification[]
+  announcements     Announcement[]
+  documents         EmployeeDocument[]
+
+  @@index([subsidiaryId])
+  @@index([departmentId])
+  @@index([managerId])
+  @@index([roleId])
+}
+
+model EmployeeDocument {
+  id         Int      @id @default(autoincrement())
+  fileName   String
+  filePath   String
+  mimeType   String
+  sizeBytes  Int
+  category   String // "CONTRACT", "ID", "OFFER_LETTER"
+  uploadedAt DateTime @default(now())
+
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+}
+
+// =====================================================================
+//  LEVEL 3: LEAVE MANAGEMENT
+// =====================================================================
+
+model LeaveType {
+  id                      Int     @id @default(autoincrement())
+  name                    String // "Annual Leave"
+  defaultAnnualQuota      Int // saal ke kitne din
+  requiresEscalation      Boolean @default(false) // true = hamesha Dept Head tak jaye
+  escalationThresholdDays Int     @default(3) // is se zyada din = escalate
+  isActive                Boolean @default(true)
+
+  // null = sab subsidiaries ke liye (global), warna sirf us subsidiary ki
+  subsidiaryId Int?
+  subsidiary   Subsidiary? @relation(fields: [subsidiaryId], references: [id], onDelete: Cascade)
+
+  balances LeaveBalance[]
+  requests LeaveRequest[]
+
+  @@unique([subsidiaryId, name])
+}
+
+model LeaveBalance {
+  id        Int   @id @default(autoincrement())
+  year      Int
+  allotted  Float
+  used      Float @default(0)
+
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  leaveTypeId Int
+  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Restrict)
+
+  @@unique([employeeId, leaveTypeId, year]) // ek employee, ek type, ek saal = ek row
+}
+
+model LeaveRequest {
+  id           Int         @id @default(autoincrement())
+  startDate    DateTime
+  endDate      DateTime
+  totalDays    Float // weekends + holidays nikaal ke
+  reason       String
+  status       LeaveStatus @default(PENDING)
+  currentLevel Int         @default(1) // abhi kis level pe pending hai
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  leaveTypeId Int
+  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Restrict)
+
+  steps LeaveApprovalStep[]
+
+  @@index([employeeId])
+  @@index([status])
+}
+
+model LeaveApprovalStep {
+  id        Int              @id @default(autoincrement())
+  level     Int // 1 = Team Lead, 2 = Dept Head, 99 = HR override
+  decision  ApprovalDecision @default(PENDING)
+  comment   String?
+  decidedAt DateTime?
+  createdAt DateTime         @default(now())
+
+  leaveRequestId Int
+  leaveRequest   LeaveRequest @relation(fields: [leaveRequestId], references: [id], onDelete: Cascade)
+
+  approverId Int
+  approver   Employee @relation("StepApprover", fields: [approverId], references: [id], onDelete: Restrict)
+
+  @@index([approverId, decision]) // "meri pending approvals" query fast
+  @@index([leaveRequestId])
+}
+
+// =====================================================================
+//  LEVEL 4: HOLIDAYS, ATTENDANCE, ANNOUNCEMENTS, NOTIFICATIONS
+// =====================================================================
+
+model Holiday {
+  id   Int      @id @default(autoincrement())
+  name String
+  date DateTime
+
+  subsidiaryId Int
+  subsidiary   Subsidiary @relation(fields: [subsidiaryId], references: [id], onDelete: Cascade)
+
+  @@unique([subsidiaryId, date])
+}
+
+model Attendance {
+  id       Int              @id @default(autoincrement())
+  date     DateTime
+  status   AttendanceStatus
+  checkIn  DateTime?
+  checkOut DateTime?
+
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date]) // ek din mein ek hi record
+  @@index([date])
+}
+
+model Announcement {
+  id        Int               @id @default(autoincrement())
+  title     String
+  body      String
+  scope     AnnouncementScope @default(GLOBAL)
+  createdAt DateTime          @default(now())
+
+  subsidiaryId Int? // sirf jab scope = SUBSIDIARY
+  subsidiary   Subsidiary? @relation(fields: [subsidiaryId], references: [id], onDelete: Cascade)
+
+  createdById Int
+  createdBy   Employee @relation(fields: [createdById], references: [id], onDelete: Restrict)
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  link      String? // "/leave/12" - click pe kahan jaye
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, isRead])
+}
