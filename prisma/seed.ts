@@ -253,6 +253,8 @@ const LEAVES: LeaveSpec[] = [
   { emp: "saad", type: "Paternity Leave", startOffset: 4, days: 5, reason: "Newborn baby", flow: ["A", "P"], comments: ["Congratulations! Approved."] },
 
   // Mukammal approved
+  { emp: "ali", type: "Sick Leave", startOffset: -15, days: 2, reason: "Flu", flow: ["A"], comments: ["Get well soon, Ali."] },
+  { emp: "ali", type: "Work From Home", startOffset: -9, days: 1, reason: "Plumber visit at home", flow: ["A"] },
   { emp: "zain", type: "Sick Leave", startOffset: -7, days: 1, reason: "Fever", flow: ["A"], comments: ["Get well soon."] },
   { emp: "omar_f", type: "Annual Leave", startOffset: -20, days: 5, reason: "Northern areas trip", flow: ["A", "A"], comments: ["OK", "Approved, enjoy."] },
   { emp: "iqra", type: "Work From Home", startOffset: -3, days: 1, reason: "Home internet installation", flow: ["A"] },

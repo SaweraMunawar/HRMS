@@ -13,11 +13,11 @@ export function DashboardPlaceholder({ title, user }: { title: string; user: { n
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Login is working</CardTitle>
-          <CardDescription>This page is protected by role. Dashboard widgets come in the next step.</CardDescription>
+          <CardTitle>Coming in a later step</CardTitle>
+          <CardDescription>This page is protected by role. Its widgets will be added soon.</CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Try opening a page your role cannot access. You will be sent back to your own dashboard.
+          Use the sidebar to open your other dashboards.
         </CardContent>
       </Card>
     </div>
