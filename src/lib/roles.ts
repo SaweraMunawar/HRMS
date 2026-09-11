@@ -33,6 +33,10 @@ const AREA_ACCESS: { prefix: string; roles: readonly RoleCode[] }[] = [
   { prefix: "/hr", roles: ["SUPER_ADMIN", "HR_MANAGER"] },
   { prefix: "/manager", roles: ["SUPER_ADMIN", "HR_MANAGER", "DEPT_HEAD", "TEAM_LEAD"] },
   { prefix: "/employee", roles: ROLE_CODES }, // apna leave / profile sab ke paas
+  { prefix: "/leave/approvals", roles: ["SUPER_ADMIN", "HR_MANAGER", "DEPT_HEAD", "TEAM_LEAD"] },
+  { prefix: "/leave", roles: ROLE_CODES }, // apni leave sab dekh sakte hain
+  { prefix: "/org-chart", roles: ROLE_CODES }, // Requirement 2.3: employee bhi org chart dekhta hai
+  { prefix: "/employees", roles: ["SUPER_ADMIN", "HR_MANAGER", "DEPT_HEAD"] },
 ];
 
 export function canAccessPath(role: RoleCode, pathname: string): boolean {

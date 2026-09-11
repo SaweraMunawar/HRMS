@@ -3,7 +3,7 @@
 //  Access ka faisla roles.ts ka canAccessPath karta hai (proxy bhi wahi use karta hai),
 //  is liye menu aur security hamesha ek jaise rehte hain.
 // =====================================================================
-import { Building2, Globe, User, Users, type LucideIcon } from "lucide-react";
+import { Building2, CalendarDays, Globe, Inbox, Network, User, Users, type LucideIcon } from "lucide-react";
 import { canAccessPath, type RoleCode } from "@/lib/roles";
 
 export type NavItem = { title: string; href: string; icon: LucideIcon };
@@ -19,7 +19,20 @@ const NAV_GROUPS: NavGroup[] = [
       { title: "My dashboard", href: "/employee", icon: User },
     ],
   },
-  // Agle steps mein: Leave, Organization (org chart, employees) waghera
+  {
+    label: "Leave",
+    items: [
+      { title: "My leave", href: "/leave", icon: CalendarDays },
+      { title: "Approvals", href: "/leave/approvals", icon: Inbox },
+    ],
+  },
+  {
+    label: "Organization",
+    items: [
+      { title: "Org chart", href: "/org-chart", icon: Network },
+      { title: "Employees", href: "/employees", icon: Users },
+    ],
+  },
 ];
 
 export function getNavForRole(role: RoleCode): NavGroup[] {

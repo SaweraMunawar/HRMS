@@ -176,3 +176,48 @@ export async function getMyDashboard(employeeId: number) {
     announcements,
   };
 }
+
+// ---------------------------------------------------------------------
+//  Team Lead / Department Head: Team dashboard
+// ---------------------------------------------------------------------
+export async function getTeamDashboard(managerId: number, reportIds: number[]) {
+  const today = toDateOnly(new Date());
+
+  if (reportIds.length === 0) {
+    return { stats: { teamSize: 0, pendingApprovals: 0, onLeaveToday: 0, presentToday: 0 }, byStatus: [], attendanceDate: null };
+  }
+
+  const lastDate = await latestAttendanceDate({ employeeId: { in: reportIds } });
+
+  const [teamSize, pendingApprovals, onLeaveToday, attendanceRows] = await Promise.all([
+    prisma.employee.count({ where: { id: { in: reportIds }, ...ACTIVE } }),
+    prisma.leaveApprovalStep.count({ where: { approverId: managerId, decision: "PENDING", leaveRequest: { status: "PENDING" } } }),
+    prisma.leaveRequest.count({
+      where: { employeeId: { in: reportIds }, status: "APPROVED", startDate: { lte: today }, endDate: { gte: today } },
+    }),
+    lastDate
+      ? prisma.attendance.groupBy({ by: ["status"], where: { employeeId: { in: reportIds }, date: lastDate }, _count: true })
+      : Promise.resolve([]),
+  ]);
+
+  // Chart: team ki leave requests status ke hisaab se
+  const grouped = await prisma.leaveRequest.groupBy({
+    by: ["status"],
+    where: { employeeId: { in: reportIds } },
+    _count: true,
+  });
+  const byStatus = ["PENDING", "APPROVED", "REJECTED", "CANCELLED"]
+    .map((status) => ({ status: status.charAt(0) + status.slice(1).toLowerCase(), count: grouped.find((g) => g.status === status)?._count ?? 0 }))
+    .filter((s) => s.count > 0);
+
+  return {
+    stats: {
+      teamSize,
+      pendingApprovals,
+      onLeaveToday,
+      presentToday: attendanceRows.find((r) => r.status === "PRESENT")?._count ?? 0,
+    },
+    byStatus,
+    attendanceDate: lastDate,
+  };
+}
