@@ -221,3 +221,88 @@ export async function getTeamDashboard(managerId: number, reportIds: number[]) {
     attendanceDate: lastDate,
   };
 }
+
+// ---------------------------------------------------------------------
+//  HR Manager: Subsidiary overview (Requirement 3.8)
+//  Super Admin bhi kisi bhi subsidiary ka yeh view dekh sakta hai.
+// ---------------------------------------------------------------------
+export async function getSubsidiaryOverview(subsidiaryId: number) {
+  const today = toDateOnly(new Date());
+  const year = today.getUTCFullYear();
+
+  const subsidiary = await prisma.subsidiary.findUniqueOrThrow({
+    where: { id: subsidiaryId },
+    select: { id: true, name: true, city: true, timezone: true, currency: true, country: { select: { name: true } } },
+  });
+
+  const [departments, headcountByDept, pendingLeave, onLeaveToday, holidays, lastDate, balances] = await Promise.all([
+    prisma.department.findMany({
+      where: { subsidiaryId, isActive: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, head: { select: { firstName: true, lastName: true } } },
+    }),
+    prisma.employee.groupBy({ by: ["departmentId"], where: { subsidiaryId, ...ACTIVE }, _count: true }),
+    prisma.leaveRequest.count({ where: { status: "PENDING", employee: { subsidiaryId } } }),
+    prisma.leaveRequest.count({
+      where: { status: "APPROVED", startDate: { lte: today }, endDate: { gte: today }, employee: { subsidiaryId } },
+    }),
+    prisma.holiday.findMany({
+      where: { subsidiaryId, date: { gte: today } },
+      orderBy: { date: "asc" },
+      take: 5,
+      select: { id: true, name: true, date: true },
+    }),
+    latestAttendanceDate({ employee: { subsidiaryId } }),
+    // Leave utilization: har type ka allotted vs used, poori subsidiary ka
+    prisma.leaveBalance.groupBy({
+      by: ["leaveTypeId"],
+      where: { year, employee: { subsidiaryId, ...ACTIVE } },
+      _sum: { allotted: true, used: true },
+    }),
+  ]);
+
+  const attendanceRows = lastDate
+    ? await prisma.attendance.groupBy({ by: ["status"], where: { date: lastDate, employee: { subsidiaryId } }, _count: true })
+    : [];
+
+  const byDepartment = departments.map((d) => ({
+    name: d.name,
+    headcount: headcountByDept.find((h) => h.departmentId === d.id)?._count ?? 0,
+    head: d.head ? `${d.head.firstName} ${d.head.lastName}` : null,
+  }));
+
+  // Chart ke liye sirf woh types jin ka koi quota hai
+  const leaveTypes = await prisma.leaveType.findMany({
+    where: { id: { in: balances.map((b) => b.leaveTypeId) } },
+    select: { id: true, name: true },
+  });
+  const utilization = balances
+    .map((b) => {
+      const allotted = b._sum.allotted ?? 0;
+      const used = b._sum.used ?? 0;
+      return {
+        type: (leaveTypes.find((t) => t.id === b.leaveTypeId)?.name ?? "Leave").replace(" Leave", ""),
+        used,
+        percent: allotted > 0 ? Math.round((used / allotted) * 100) : 0,
+      };
+    })
+    .filter((u) => u.used > 0)
+    .sort((a, b) => b.used - a.used);
+
+  const headcount = byDepartment.reduce((sum, d) => sum + d.headcount, 0);
+
+  return {
+    subsidiary,
+    stats: {
+      headcount,
+      departments: departments.length,
+      pendingLeave,
+      onLeaveToday,
+      attendanceRate: attendanceRate(attendanceRows),
+      attendanceDate: lastDate,
+    },
+    byDepartment,
+    utilization,
+    holidays,
+  };
+}
