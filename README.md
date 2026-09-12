@@ -395,7 +395,7 @@ src/
 
 - [x] Holiday calendar per subsidiary, applied to leave-day calculations
 - [x] Attendance records feeding dashboard metrics
-- [x] Notifications on submission, escalation and decision
+- [x] Notification centre in the header, with unread badge and mark-as-read
 - [x] Employee directory with search and filters
 - [x] Announcements, global and subsidiary-scoped
 
@@ -404,7 +404,6 @@ src/
 | Item | Status |
 |---|---|
 | Subsidiary overview dashboard (`/hr`) | Route and access control exist; widgets are a placeholder. The queries it needs already exist in `queries/dashboard.ts` |
-| Notification centre UI | Notifications are written to the database and visible in Prisma Studio; no dropdown in the header yet |
 | CSV / PDF export | Not built |
 | Document upload | Schema (`EmployeeDocument`) is in place; no upload UI |
 | Admin CRUD screens for subsidiaries and departments | Managed through the seed and Prisma Studio |
