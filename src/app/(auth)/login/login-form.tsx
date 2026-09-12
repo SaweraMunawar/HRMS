@@ -80,16 +80,18 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isPending}>
+        <Button type="submit" size="lg" className="w-full" disabled={isPending}>
           {isPending && <Loader2 className="size-4 animate-spin" />}
           {isPending ? "Signing in..." : "Sign in"}
         </Button>
       </form>
 
-      <div className="flex flex-col gap-3 rounded-lg border bg-muted/40 p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-dashed p-4">
         <div>
-          <p className="text-sm font-medium">Demo accounts</p>
-          <p className="text-xs text-muted-foreground">Click a role to fill the form. Password: {DEMO_PASSWORD}</p>
+          <p className="text-sm font-medium">Try a role</p>
+          <p className="text-xs text-muted-foreground">
+            Pick one to fill the form. Every demo account uses the password {DEMO_PASSWORD}.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {DEMO_ACCOUNTS.map((acc) => (

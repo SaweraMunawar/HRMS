@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Building2, CalendarDays, CalendarOff, CheckCircle2, Inbox, Users } from "lucide-react";
 import { DepartmentChart } from "@/components/dashboard/department-chart";
 import { EmptyState } from "@/components/dashboard/empty-state";
-import { StatCard } from "@/components/dashboard/stat-card";
+import { StatStrip } from "@/components/dashboard/stat-card";
 import { UtilizationChart } from "@/components/dashboard/utilization-chart";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ export default async function SubsidiaryOverviewPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeader
           title="Subsidiary overview"
-          description={`${subsidiary.name} · ${subsidiary.city}, ${subsidiary.country.name} · ${subsidiary.timezone} · ${subsidiary.currency}`}
+          description={`${subsidiary.city}, ${subsidiary.country.name}. Local time ${subsidiary.timezone}, payroll in ${subsidiary.currency}.`}
         />
         <Button asChild variant="outline">
           <Link href="/employees">
@@ -32,17 +32,19 @@ export default async function SubsidiaryOverviewPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Headcount" value={stats.headcount} hint={`Across ${stats.departments} departments`} icon={Users} />
-        <StatCard title="Pending leave requests" value={stats.pendingLeave} hint="Awaiting a decision in this subsidiary" icon={Inbox} />
-        <StatCard title="On leave today" value={stats.onLeaveToday} hint="Approved leave covering today" icon={CalendarOff} />
-        <StatCard
-          title="Attendance rate"
-          value={stats.attendanceRate === null ? "—" : `${stats.attendanceRate}%`}
-          hint={stats.attendanceDate ? `Last working day, ${formatDate(stats.attendanceDate)}` : "No attendance recorded yet"}
-          icon={CheckCircle2}
-        />
-      </div>
+      <StatStrip
+        stats={[
+          { title: "Headcount", value: stats.headcount, hint: `Across ${stats.departments} departments`, icon: Users },
+          { title: "Pending leave", value: stats.pendingLeave, hint: "Awaiting a decision here", icon: Inbox, tone: "attention" },
+          { title: "On leave today", value: stats.onLeaveToday, hint: "Approved leave covering today", icon: CalendarOff },
+          {
+            title: "Attendance rate",
+            value: stats.attendanceRate === null ? "—" : `${stats.attendanceRate}%`,
+            hint: stats.attendanceDate ? `Last working day, ${formatDate(stats.attendanceDate)}` : "No attendance recorded yet",
+            icon: CheckCircle2,
+          },
+        ]}
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>

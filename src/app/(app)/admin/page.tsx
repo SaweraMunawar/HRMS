@@ -1,7 +1,7 @@
 import { CalendarClock, CalendarOff, CheckCircle2, Globe, Inbox, Users } from "lucide-react";
 import { CountryChart } from "@/components/dashboard/country-chart";
 import { EmptyState } from "@/components/dashboard/empty-state";
-import { StatCard } from "@/components/dashboard/stat-card";
+import { StatStrip } from "@/components/dashboard/stat-card";
 import { SubsidiaryChart } from "@/components/dashboard/subsidiary-chart";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -20,17 +20,19 @@ export default async function GlobalOverviewPage() {
     <div className="flex flex-col gap-6">
       <PageHeader title="Global overview" description="Headcount, leave and attendance across every subsidiary." />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total headcount" value={stats.headcount} hint={`${stats.subsidiaries} subsidiaries in ${stats.countries} countries`} icon={Users} />
-        <StatCard title="Pending leave requests" value={stats.pendingLeave} hint="Awaiting approval, all subsidiaries" icon={Inbox} />
-        <StatCard title="On leave today" value={stats.onLeaveToday} hint="Approved leave covering today" icon={CalendarOff} />
-        <StatCard
-          title="Attendance rate"
-          value={stats.attendanceRate === null ? "—" : `${stats.attendanceRate}%`}
-          hint={stats.attendanceDate ? `Last working day, ${formatDate(stats.attendanceDate)}` : "No attendance recorded yet"}
-          icon={CheckCircle2}
-        />
-      </div>
+      <StatStrip
+        stats={[
+          { title: "Total headcount", value: stats.headcount, hint: `${stats.subsidiaries} subsidiaries in ${stats.countries} countries`, icon: Users },
+          { title: "Pending leave", value: stats.pendingLeave, hint: "Awaiting approval, all subsidiaries", icon: Inbox, tone: "attention" },
+          { title: "On leave today", value: stats.onLeaveToday, hint: "Approved leave covering today", icon: CalendarOff },
+          {
+            title: "Attendance rate",
+            value: stats.attendanceRate === null ? "—" : `${stats.attendanceRate}%`,
+            hint: stats.attendanceDate ? `Last working day, ${formatDate(stats.attendanceDate)}` : "No attendance recorded yet",
+            icon: CheckCircle2,
+          },
+        ]}
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <Card className="lg:col-span-3">

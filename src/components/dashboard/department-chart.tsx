@@ -9,11 +9,11 @@ export function DepartmentChart({ data }: { data: { name: string; headcount: num
   return (
     <ChartContainer config={config} className="h-[260px] w-full">
       <BarChart data={data} layout="vertical" margin={{ left: 8 }}>
-        <CartesianGrid horizontal={false} />
+        <CartesianGrid horizontal={false} strokeDasharray="3 3" />
         <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
         <YAxis type="category" dataKey="name" width={120} tickLine={false} axisLine={false} />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="headcount" fill="var(--color-headcount)" radius={4} />
+        <Bar dataKey="headcount" fill="var(--color-headcount)" radius={4} maxBarSize={44} />
       </BarChart>
     </ChartContainer>
   );

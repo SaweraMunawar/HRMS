@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CalendarOff, CheckCircle2, Inbox, Users } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { LeaveStatusChart } from "@/components/dashboard/leave-status-chart";
-import { StatCard } from "@/components/dashboard/stat-card";
+import { StatStrip } from "@/components/dashboard/stat-card";
 import { LeaveStatusBadge } from "@/components/leave-status-badge";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -33,17 +33,19 @@ export default async function TeamDashboardPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Team size" value={stats.teamSize} hint="Direct and indirect reports" icon={Users} />
-        <StatCard title="Waiting on you" value={stats.pendingApprovals} hint="Leave requests to decide" icon={Inbox} />
-        <StatCard title="On leave today" value={stats.onLeaveToday} hint="Approved leave covering today" icon={CalendarOff} />
-        <StatCard
-          title="Present"
-          value={stats.presentToday}
-          hint={data.attendanceDate ? `Last working day, ${formatDate(data.attendanceDate)}` : "No attendance recorded"}
-          icon={CheckCircle2}
-        />
-      </div>
+      <StatStrip
+        stats={[
+          { title: "Team size", value: stats.teamSize, hint: "Direct and indirect reports", icon: Users },
+          { title: "Waiting on you", value: stats.pendingApprovals, hint: "Leave requests to decide", icon: Inbox, tone: "attention" },
+          { title: "On leave today", value: stats.onLeaveToday, hint: "Approved leave covering today", icon: CalendarOff },
+          {
+            title: "Present",
+            value: stats.presentToday,
+            hint: data.attendanceDate ? `Last working day, ${formatDate(data.attendanceDate)}` : "No attendance recorded",
+            icon: CheckCircle2,
+          },
+        ]}
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
@@ -73,7 +75,7 @@ export default async function TeamDashboardPage() {
                         {r.employee.firstName} {r.employee.lastName}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {r.leaveType.name} · {formatDateRange(r.startDate, r.endDate)} · {pluralDays(r.totalDays)}
+                        {r.leaveType.name}, {formatDateRange(r.startDate, r.endDate)} ({pluralDays(r.totalDays)})
                       </p>
                     </div>
                     <LeaveStatusBadge status={r.status} />

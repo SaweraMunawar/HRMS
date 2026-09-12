@@ -83,10 +83,12 @@ function NodeRow({
             {node.status === "TERMINATED" && <Badge variant="outline">Inactive</Badge>}
           </div>
           <p className="text-sm text-muted-foreground">
-            {node.title} · {node.department} · {node.subsidiary}
+            {node.title}, {node.department}
           </p>
           {isRoleCode(node.roleCode) && (
-            <p className="text-xs text-muted-foreground">{ROLE_LABELS[node.roleCode]}</p>
+            <p className="text-xs text-muted-foreground">
+              {ROLE_LABELS[node.roleCode]} in {node.subsidiary}
+            </p>
           )}
         </div>
 

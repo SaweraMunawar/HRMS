@@ -1,7 +1,7 @@
 import { CalendarCheck, CalendarDays, Clock, Megaphone, TreePalm, UserRound } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { LeaveBalanceChart } from "@/components/dashboard/leave-balance-chart";
-import { StatCard } from "@/components/dashboard/stat-card";
+import { StatStrip } from "@/components/dashboard/stat-card";
 import { LeaveStatusBadge } from "@/components/leave-status-badge";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -19,20 +19,22 @@ export default async function MyDashboardPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title={`Welcome, ${me.firstName}`}
-        description={`${me.designation.title} · ${me.department.name} · ${me.subsidiary.name}`}
+        description={`${me.designation.title} in ${me.department.name}, ${me.subsidiary.name}`}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Annual leave left" value={stats.annualRemaining} hint={`of ${stats.annualAllotted} days this year`} icon={TreePalm} />
-        <StatCard title="Days taken" value={stats.daysTaken} hint="All leave types, this year" icon={CalendarCheck} />
-        <StatCard title="Pending requests" value={stats.pending} hint="Awaiting approval" icon={Clock} />
-        <StatCard
-          title="Reporting to"
-          value={me.manager ? `${me.manager.firstName} ${me.manager.lastName}` : "—"}
-          hint={me.manager?.designation.title ?? "Top of the organization"}
-          icon={UserRound}
-        />
-      </div>
+      <StatStrip
+        stats={[
+          { title: "Annual leave left", value: stats.annualRemaining, hint: `of ${stats.annualAllotted} days this year`, icon: TreePalm },
+          { title: "Days taken", value: stats.daysTaken, hint: "All leave types, this year", icon: CalendarCheck },
+          { title: "Pending requests", value: stats.pending, hint: "Awaiting approval", icon: Clock, tone: "attention" },
+          {
+            title: "Reporting to",
+            value: me.manager ? `${me.manager.firstName} ${me.manager.lastName}` : "—",
+            hint: me.manager?.designation.title ?? "Top of the organization",
+            icon: UserRound,
+          },
+        ]}
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <Card className="lg:col-span-3">
@@ -66,7 +68,7 @@ export default async function MyDashboardPage() {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{r.leaveType.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {formatDateRange(r.startDate, r.endDate)} · {pluralDays(r.totalDays)}
+                          {formatDateRange(r.startDate, r.endDate)} ({pluralDays(r.totalDays)})
                         </p>
                         {step && (
                           <p className="text-xs text-muted-foreground">

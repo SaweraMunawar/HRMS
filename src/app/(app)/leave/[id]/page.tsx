@@ -85,11 +85,11 @@ export default async function LeaveDetailPage({
         </Button>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <PageHeader
-            title={`${request.leaveType.name} · ${formatDateRange(request.startDate, request.endDate)}`}
+            title={`${request.leaveType.name}, ${formatDateRange(request.startDate, request.endDate)}`}
             description={
               isOwner
                 ? `Submitted on ${formatDate(request.createdAt)}`
-                : `${request.employee.firstName} ${request.employee.lastName} · ${request.employee.designation.title} · ${request.employee.department.name}`
+                : `${request.employee.firstName} ${request.employee.lastName}, ${request.employee.designation.title} in ${request.employee.department.name}`
             }
           />
           <LeaveStatusBadge status={request.status} />

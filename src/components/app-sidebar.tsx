@@ -39,7 +39,7 @@ export function AppSidebar({ user, subsidiaryName }: Props) {
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
                   <span className="truncate font-semibold">Nexora HRMS</span>
-                  <span className="truncate text-xs text-muted-foreground">{subsidiaryName}</span>
+                  <span className="truncate text-xs text-sidebar-foreground/65">{subsidiaryName}</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -76,10 +76,10 @@ export function AppSidebar({ user, subsidiaryName }: Props) {
         <SidebarMenu>
           <SidebarMenuItem>
             <div className="flex items-center gap-2 px-1 py-1.5 group-data-[collapsible=icon]:hidden">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">{initials}</div>
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-xs font-medium text-sidebar-accent-foreground">{initials}</div>
               <div className="grid min-w-0 flex-1 leading-tight">
                 <span className="truncate text-sm font-medium">{user.name}</span>
-                <span className="truncate text-xs text-muted-foreground">{ROLE_LABELS[user.role]}</span>
+                <span className="truncate text-xs text-sidebar-foreground/65">{ROLE_LABELS[user.role]}</span>
               </div>
             </div>
           </SidebarMenuItem>
