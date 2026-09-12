@@ -180,6 +180,7 @@ All figures are queried from the database at request time. There are no hard-cod
 | Dashboard | Audience | Contents |
 |---|---|---|
 | Global overview | Super Admin | Worldwide headcount, pending leave, on-leave-today, attendance rate, subsidiary comparison bar chart, headcount-by-country donut, pending approvals table |
+| Subsidiary overview | HR Manager | Headcount by department, leave utilisation by type, departments table with their heads, upcoming local holidays, attendance rate |
 | Team dashboard | Team Lead, Dept Head | Team size, requests awaiting you, on leave today, attendance, leave-status chart, upcoming team leave |
 | My dashboard | Employee | Leave balance chart, recent requests with live status, upcoming holidays, announcements, reporting manager |
 
@@ -388,7 +389,7 @@ src/
 - [x] Authentication with five distinct roles and seeded demo users
 - [x] Organization data: 2 countries, 3 subsidiaries, 11 departments, 35 employees, four-level reporting chain
 - [x] Leave management end to end: submit → direct manager → conditional escalation → status visible to the employee
-- [x] Three role-based dashboards driven entirely by database queries
+- [x] Four role-based dashboards driven entirely by database queries
 - [x] Organization chart reflecting the seeded reporting structure
 
 ### Also included (SRS 9.2 — "if time allows")
@@ -403,7 +404,6 @@ src/
 
 | Item | Status |
 |---|---|
-| Subsidiary overview dashboard (`/hr`) | Route and access control exist; widgets are a placeholder. The queries it needs already exist in `queries/dashboard.ts` |
 | CSV / PDF export | Not built |
 | Document upload | Schema (`EmployeeDocument`) is in place; no upload UI |
 | Admin CRUD screens for subsidiaries and departments | Managed through the seed and Prisma Studio |
