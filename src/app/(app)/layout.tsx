@@ -1,17 +1,22 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { NotificationBell } from "@/components/notification-bell";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { requireUser } from "@/lib/authz";
+import { getNotifications } from "@/lib/queries/notifications";
 import { prisma } from "@/lib/prisma";
 
 // Login ke baad wale saare pages: sidebar + upar header
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const subsidiary = await prisma.subsidiary.findUnique({
-    where: { id: user.subsidiaryId },
-    select: { name: true, country: { select: { name: true } } },
-  });
+  const [subsidiary, notifications] = await Promise.all([
+    prisma.subsidiary.findUnique({
+      where: { id: user.subsidiaryId },
+      select: { name: true, country: { select: { name: true } } },
+    }),
+    getNotifications(Number(user.id)),
+  ]);
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -24,6 +29,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <span className="text-sm text-muted-foreground">
             {subsidiary ? `${subsidiary.name}, ${subsidiary.country.name}` : "Nexora HRMS"}
           </span>
+          <div className="ml-auto">
+            <NotificationBell items={notifications.items} unreadCount={notifications.unreadCount} />
+          </div>
         </header>
         <main className="flex-1 p-4 sm:p-6">{children}</main>
       </SidebarInset>

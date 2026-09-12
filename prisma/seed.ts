@@ -497,6 +497,27 @@ async function main() {
     ],
   });
 
+  // ---- Announcement notifications (har banday ko uske scope ki announcement) ----
+  const announcementRows = await prisma.announcement.findMany({
+    select: { id: true, title: true, scope: true, subsidiaryId: true, createdAt: true },
+  });
+  const announcementNotifications = [];
+  for (const a of announcementRows) {
+    for (const { id, spec } of Object.values(emp)) {
+      if (spec.status === EmployeeStatus.TERMINATED) continue;
+      if (a.scope === AnnouncementScope.SUBSIDIARY && subId[spec.sub] !== a.subsidiaryId) continue;
+      announcementNotifications.push({
+        employeeId: id,
+        message: `New announcement: ${a.title}`,
+        link: "/employee",
+        // 3 din se purani announcements padhi hui hain
+        isRead: a.createdAt < addDays(TODAY, -3),
+        createdAt: a.createdAt,
+      });
+    }
+  }
+  await prisma.notification.createMany({ data: announcementNotifications });
+
   // ---- Summary ----
   const counts = {
     countries: await prisma.country.count(),
@@ -505,6 +526,7 @@ async function main() {
     employees: await prisma.employee.count(),
     leaveRequests: await prisma.leaveRequest.count(),
     attendance: await prisma.attendance.count(),
+    notifications: await prisma.notification.count(),
   };
   console.log("\nSeed mukammal!", counts);
   console.log(`\nDemo logins (password sab ka: ${DEMO_PASSWORD})`);
